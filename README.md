@@ -6,6 +6,16 @@ Cozy asynchronous cooperative city builder for the web. Meaningful progress in o
 
 Stardew Valley–inspired chill meadow: cream sky fade, sage grass, clay roofs, warm window glow, soft water, isometric SVG cottages and workshops.
 
+## Live
+
+| | |
+|---|---|
+| **Play** | https://meadowlight-gold.vercel.app |
+| **Source** | https://github.com/j-roylance/meadowlight |
+| **Deploy notes** | [`DEPLOY.md`](DEPLOY.md) |
+
+Production is on Vercel (auto-deploys from `main`). Supabase env vars unlock account login + shared maps; until then the site runs local-demo mode per browser.
+
 ## Quick start (local demo)
 
 ```bash
