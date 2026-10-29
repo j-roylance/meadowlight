@@ -1,16 +1,17 @@
 # Deploy Meadowlight (GitHub + Vercel + Supabase)
 
-## Already done
+## Live (wired)
 
 | Piece | URL |
 |---|---|
 | GitHub | https://github.com/j-roylance/meadowlight |
 | Vercel production | https://meadowlight-gold.vercel.app |
-| Vercel project | linked to the GitHub repo (auto-deploys on push to `main`) |
+| Supabase project | `rkkzujfdrtxwqtocoswu` (migrations applied; Auth site URL set) |
+| Vercel env | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` |
 
-Without Supabase env vars, the live site runs **local demo** in each visitor’s browser.
+Open the production URL → email OTP → create a city. Use a second email/private window to see Maps + portals.
 
-## Finish Supabase (accounts + shared maps)
+## Supabase ops (if you recreate)
 
 ### 1. Create a hosted project
 
