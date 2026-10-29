@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  --ml-cream: #f5e6c8;
+  --ml-cream-deep: #e8d4a8;
+  --ml-grass: #6b9e4a;
+  --ml-grass-deep: #4f7a35;
+  --ml-clay: #c4785a;
+  --ml-ink: #3a3020;
+  --ml-wood: #a87850;
+  --ml-sky: #b8d4e8;
+  --ml-water: #7eb8d4;
+  --ml-panel: rgba(245, 230, 200, 0.92);
+  --ml-shadow: 0 4px 16px rgba(60, 40, 20, 0.14);
+  --font-ui: var(--font-nunito), ui-rounded, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  color: var(--ml-ink);
+  font-family: var(--font-ui);
+  background: var(--ml-cream);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.meadow-btn {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.45rem 0.85rem;
+  border-radius: 12px;
+  border: 2px solid rgba(58, 48, 32, 0.18);
+  background: linear-gradient(180deg, #fff8e8 0%, var(--ml-cream-deep) 100%);
+  color: var(--ml-ink);
+  box-shadow: var(--ml-shadow);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.meadow-btn:hover {
+  filter: brightness(1.03);
+}
+
+.meadow-btn:focus-visible {
+  outline: 3px solid var(--ml-water);
+  outline-offset: 2px;
+}
+
+.meadow-btn-primary {
+  background: linear-gradient(180deg, #8fbf6a 0%, var(--ml-grass) 100%);
+  color: #1f3010;
+  border-color: rgba(40, 70, 20, 0.25);
+}
+
+.meadow-btn-clay {
+  background: linear-gradient(180deg, #d89070 0%, var(--ml-clay) 100%);
+  color: #2a1810;
+}
+
+.meadow-chip {
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: var(--ml-panel);
+  border: 1px solid rgba(58, 48, 32, 0.12);
+  box-shadow: var(--ml-shadow);
+  backdrop-filter: blur(6px);
+}
+
+.meadow-panel {
+  background: var(--ml-panel);
+  border: 1px solid rgba(58, 48, 32, 0.14);
+  border-radius: 18px;
+  box-shadow: var(--ml-shadow);
+  backdrop-filter: blur(8px);
+}
+
+.meadow-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
