@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { isSupabaseEnvReady } from "@/lib/supabase/env";
+import { LoginMapBackdrop } from "./LoginMapBackdrop";
 
 export type AuthMode = "demo" | "signed_out" | "signed_in";
 
@@ -162,8 +163,9 @@ export function AuthPanel({
   };
 
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center p-4">
-      <div className="meadow-panel w-full max-w-md p-6">
+    <div className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden p-4">
+      <LoginMapBackdrop />
+      <div className="meadow-panel relative z-10 w-full max-w-md p-6 shadow-[0_12px_40px_rgba(58,48,32,0.28)]">
         <h1 className="meadow-title mb-1 text-3xl">Meadowlight</h1>
         <p className="mb-4 text-sm opacity-80">
           Sign in to save your city to your account and visit real neighbors.
@@ -317,8 +319,11 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
   if (!ready) {
     return (
-      <div className="flex h-[100dvh] items-center justify-center">
-        <div className="meadow-panel p-6 meadow-title text-2xl">Checking session…</div>
+      <div className="relative flex h-[100dvh] items-center justify-center overflow-hidden">
+        <LoginMapBackdrop />
+        <div className="meadow-panel relative z-10 p-6 meadow-title text-2xl">
+          Checking session…
+        </div>
       </div>
     );
   }

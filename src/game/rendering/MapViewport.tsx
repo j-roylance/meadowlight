@@ -85,6 +85,9 @@ interface Props {
   onTileHover?: (x: bigint, y: bigint) => void;
   onEntityClick?: (entity: PlacedEntity) => void;
   reducedMotion?: boolean;
+  /** Decorative / login backdrop: no pan/zoom/click. */
+  interactive?: boolean;
+  initialCam?: { x: number; y: number; zoom: number };
 }
 
 function viewPos(wx: number, wy: number, rot: ViewRotation) {
@@ -178,13 +181,16 @@ export function MapViewport({
   onTileHover,
   onEntityClick,
   reducedMotion,
+  interactive = true,
+  initialCam,
 }: Props) {
+  const startCam = initialCam ?? { x: 2, y: 2, zoom: 1 };
   const containerRef = useRef<HTMLDivElement>(null);
   const worldGroupRef = useRef<SVGGElement>(null);
   const [size, setSize] = useState({ w: 800, h: 600 });
-  const camRef = useRef({ x: 2, y: 2, zoom: 1 });
+  const camRef = useRef({ ...startCam });
   const rotRef = useRef<ViewRotation>(0);
-  const [cam, setCam] = useState({ x: 2, y: 2, zoom: 1 });
+  const [cam, setCam] = useState({ ...startCam });
   const [rot, setRot] = useState<ViewRotation>(0);
   const [hover, setHover] = useState<{ x: bigint; y: bigint } | null>(null);
   const drag = useRef<{
@@ -195,7 +201,7 @@ export function MapViewport({
     cx: number;
     cy: number;
   } | null>(null);
-  const lastTileCam = useRef({ x: 2, y: 2, zoom: 1, rot: 0 as ViewRotation });
+  const lastTileCam = useRef({ ...startCam, rot: 0 as ViewRotation });
   const rebaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -336,6 +342,7 @@ export function MapViewport({
   );
 
   const onPointerDown = (e: React.PointerEvent) => {
+    if (!interactive) return;
     const c = camRef.current;
     drag.current = {
       active: true,
@@ -349,6 +356,7 @@ export function MapViewport({
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
+    if (!interactive) return;
     if (!drag.current?.active) {
       if (
         tool === "build" ||
@@ -406,6 +414,7 @@ export function MapViewport({
   };
 
   const onPointerUp = (e: React.PointerEvent) => {
+    if (!interactive) return;
     const d = drag.current;
     drag.current = null;
     if (rebaseTimer.current != null) {
@@ -446,6 +455,7 @@ export function MapViewport({
   };
 
   const onWheel = (e: React.WheelEvent) => {
+    if (!interactive) return;
     e.preventDefault();
     const nextZoom = Math.min(
       2.2,
@@ -653,43 +663,45 @@ export function MapViewport({
         </g>
       </svg>
 
-      <div className="absolute bottom-3 left-3 flex flex-wrap gap-2">
-        <button type="button" className="meadow-btn" onClick={() => jumpTo(1, 1)} aria-label="Jump to town hall">
-          Town hall
-        </button>
-        <button type="button" className="meadow-btn" onClick={() => setZoom(1.15)} aria-label="Zoom in">
-          +
-        </button>
-        <button type="button" className="meadow-btn" onClick={() => setZoom(0.87)} aria-label="Zoom out">
-          −
-        </button>
-        <button
-          type="button"
-          className="meadow-btn"
-          onClick={() => rotateBy(3)}
-          aria-label="Rotate view 90 degrees left"
-          title="Rotate view 90° left"
-        >
-          Rotate L
-        </button>
-        <button
-          type="button"
-          className="meadow-btn"
-          onClick={() => rotateBy(1)}
-          aria-label="Rotate view 90 degrees right"
-          title="Rotate view 90° right"
-        >
-          Rotate R
-        </button>
-      </div>
+      {interactive && (
+        <div className="absolute bottom-3 left-3 flex flex-wrap gap-2">
+          <button type="button" className="meadow-btn" onClick={() => jumpTo(1, 1)} aria-label="Jump to town hall">
+            Town hall
+          </button>
+          <button type="button" className="meadow-btn" onClick={() => setZoom(1.15)} aria-label="Zoom in">
+            +
+          </button>
+          <button type="button" className="meadow-btn" onClick={() => setZoom(0.87)} aria-label="Zoom out">
+            −
+          </button>
+          <button
+            type="button"
+            className="meadow-btn"
+            onClick={() => rotateBy(3)}
+            aria-label="Rotate view 90 degrees left"
+            title="Rotate view 90° left"
+          >
+            Rotate L
+          </button>
+          <button
+            type="button"
+            className="meadow-btn"
+            onClick={() => rotateBy(1)}
+            aria-label="Rotate view 90 degrees right"
+            title="Rotate view 90° right"
+          >
+            Rotate R
+          </button>
+        </div>
+      )}
 
-      {ghostReason && (tool === "inspect" ? hover : ghostPos) && (
+      {interactive && ghostReason && (tool === "inspect" ? hover : ghostPos) && (
         <div className="absolute top-3 left-1/2 -translate-x-1/2 meadow-chip max-w-[90%] text-sm">
           {ghostReason}
         </div>
       )}
 
-      {readOnly && (
+      {interactive && readOnly && (
         <div className="absolute top-3 left-3 meadow-chip bg-amber-100/90 text-amber-950">
           Visiting — read only
         </div>

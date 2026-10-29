@@ -77,6 +77,30 @@ select {
   backdrop-filter: blur(6px);
 }
 
+@keyframes login-map-drift {
+  0% {
+    transform: translate3d(-2.5%, 0, 0) scale(1.08);
+  }
+  50% {
+    transform: translate3d(2.5%, -1.2%, 0) scale(1.1);
+  }
+  100% {
+    transform: translate3d(-2.5%, 0, 0) scale(1.08);
+  }
+}
+
+.login-map-pan {
+  animation: login-map-drift 48s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-map-pan {
+    animation: none;
+    transform: scale(1.06);
+  }
+}
+
 .meadow-panel {
   background: var(--ml-panel);
   border: 1px solid rgba(58, 48, 32, 0.14);
