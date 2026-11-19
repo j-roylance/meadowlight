@@ -72,6 +72,15 @@ export interface GameService {
     y: bigint;
   }): Promise<CommandResult>;
 
+  /** Free 90° yaw of a placed building (does not spend an action). */
+  rotateBuilding(input: {
+    requestId: string;
+    expectedRevision: number;
+    entityId: string;
+    /** +1 = 90° clockwise (from above), -1 = counter-clockwise. */
+    direction: 1 | -1;
+  }): Promise<CommandResult>;
+
   storeEntity(input: {
     requestId: string;
     expectedRevision: number;

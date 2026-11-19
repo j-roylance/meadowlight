@@ -25,9 +25,11 @@ function GameInner() {
     loading,
     tool,
     buildDefId,
+    pendingProjectId,
     ghost,
     roadDraft,
     selected,
+    selectedHarvest,
     visiting,
     sceneView,
     handleTileClick,
@@ -58,10 +60,12 @@ function GameInner() {
           readOnly={Boolean(visiting)}
           tool={tool}
           buildDefId={buildDefId ?? undefined}
+          pendingProjectId={pendingProjectId ?? undefined}
           ghostValid={ghost.valid}
           ghostReason={ghost.reason}
           roadPreview={roadDraft}
           selectedEntityId={selected?.id}
+          selectedHarvest={selectedHarvest}
           onTileClick={(x, y) => void handleTileClick(x, y)}
           onTileHover={handleTileHover}
           onEntityClick={handleEntityClick}

@@ -116,7 +116,7 @@ export function createStarterCity(opts: {
     displayName: opts.displayName,
     specialty: opts.specialty,
     seed,
-    generatorVersion: 1,
+    generatorVersion: 2,
     createdAt: opts.now,
     revision: 1,
     arrivalX: 1n,

@@ -50,6 +50,13 @@ const SERVICE_GEN = `${CATALOG_VERSION}:${EXPANSION_CATALOG_VERSION}`;
 
 type Rotation = 0 | 90 | 180 | 270;
 
+/** Map selection for a harvestable terrain tile (tree / stone pile). */
+export interface HarvestSelection {
+  x: bigint;
+  y: bigint;
+  kind: "tree" | "stone_pile";
+}
+
 /** Short-lived launch animation request (skipped entirely under reduced motion). */
 export interface LaunchFx {
   id: string;
@@ -70,6 +77,9 @@ interface GameContextValue {
   setBuildDefId: (id: BuildingDefId | null) => void;
   selected: PlacedEntity | null;
   setSelected: (e: PlacedEntity | null) => void;
+  selectedHarvest: HarvestSelection | null;
+  setSelectedHarvest: (h: HarvestSelection | null) => void;
+  harvestSelected: () => Promise<void>;
   roadDraft: WorldCoord[];
   setRoadDraft: (t: WorldCoord[]) => void;
   panel: "city" | "maps" | "projects" | "settings" | "build" | "send" | "demo";
@@ -95,6 +105,8 @@ interface GameContextValue {
   supplyRun: (resource: "coins" | "wood" | "stone" | "research") => Promise<void>;
   upgradeSelected: () => Promise<void>;
   storeSelected: () => Promise<void>;
+  /** Free 90° yaw of the selected building. +1 clockwise from above. */
+  rotateSelected: (direction: 1 | -1) => Promise<void>;
   bankExchange: (
     from: "coins" | "wood" | "stone" | "research",
     to: "coins" | "wood" | "stone" | "research"
@@ -220,6 +232,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [tool, setTool] = useState<ToolMode>("inspect");
   const [buildDefId, setBuildDefId] = useState<BuildingDefId | null>(null);
   const [selected, setSelected] = useState<PlacedEntity | null>(null);
+  const [selectedHarvest, setSelectedHarvest] = useState<HarvestSelection | null>(null);
   const [roadDraft, setRoadDraft] = useState<WorldCoord[]>([]);
   const [panel, setPanel] = useState<GameContextValue["panel"]>("city");
   const [visiting, setVisiting] = useState<CityState | null>(null);
@@ -305,21 +318,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const kind = resolveTerrain(city, x, y);
         if (kind === "tree") {
           setGhost({
-            valid: city.economy.actionsRemaining > 0,
+            valid: true,
             reason: (
               <span className="inline-flex items-center gap-1.5">
-                Harvest tree · 1 action · +
-                <ResourceAmount resource="wood" amount={HARVEST_WOOD} size="sm" />
+                Tree · click to select, then mine (+{HARVEST_WOOD} wood · 1 action)
               </span>
             ),
           });
         } else if (kind === "stone_pile") {
           setGhost({
-            valid: city.economy.actionsRemaining > 0,
+            valid: true,
             reason: (
               <span className="inline-flex items-center gap-1.5">
-                Harvest stone · 1 action · +
-                <ResourceAmount resource="stone" amount={HARVEST_STONE} size="sm" />
+                Stone pile · click to select, then mine (+{HARVEST_STONE} stone · 1 action)
               </span>
             ),
           });
@@ -387,23 +398,32 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         applyCity(res);
         return;
       }
-      // Inspect / default: harvest trees and stone piles (1 action).
+      // Inspect / default: select trees and stone piles for the inspector (mine from panel).
       if (tool === "inspect" || tool === "store") {
         const kind = resolveTerrain(city, x, y);
         if (isHarvestable(kind)) {
-          const res = await service.harvestTile({
-            requestId: uuid(),
-            expectedRevision: city.revision,
-            x,
-            y,
-          });
-          applyCity(res);
+          setSelected(null);
+          setSelectedHarvest({ x, y, kind });
+          return;
         }
+        setSelectedHarvest(null);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [city, visiting, tool, buildDefId, portalDestinationId, pendingProjectId, service]
   );
+
+  const harvestSelected = useCallback(async () => {
+    if (!city || visiting || !selectedHarvest) return;
+    const res = await service.harvestTile({
+      requestId: uuid(),
+      expectedRevision: city.revision,
+      x: selectedHarvest.x,
+      y: selectedHarvest.y,
+    });
+    applyCity(res);
+    if (res.ok) setSelectedHarvest(null);
+  }, [city, visiting, selectedHarvest, service]);
 
   const createPortalAt = async (x: bigint, y: bigint) => {
     if (!city || !portalDestinationId) return;
@@ -422,6 +442,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   };
 
   const handleEntityClick = (e: PlacedEntity) => {
+    setSelectedHarvest(null);
     setSelected(e);
     if (tool === "store" && city) {
       void (async () => {
@@ -558,6 +579,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     });
     applyCity(res);
     setSelected(null);
+  };
+
+  const rotateSelected = async (direction: 1 | -1) => {
+    if (!city || !selected) return;
+    const res = await service.rotateBuilding({
+      requestId: uuid(),
+      expectedRevision: city.revision,
+      entityId: selected.id,
+      direction,
+    });
+    applyCity(res);
+    if (res.ok && res.city) {
+      const updated = res.city.entities.find((e) => e.id === selected.id);
+      if (updated && !updated.stored) setSelected(updated);
+    }
   };
 
   const bankExchange = async (
@@ -953,6 +989,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setBuildDefId,
     selected,
     setSelected,
+    selectedHarvest,
+    setSelectedHarvest,
+    harvestSelected,
     roadDraft,
     setRoadDraft,
     panel,
@@ -978,6 +1017,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     supplyRun,
     upgradeSelected,
     storeSelected,
+    rotateSelected,
     bankExchange,
     confirmRoad,
     portalDestinationId,

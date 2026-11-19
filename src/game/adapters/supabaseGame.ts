@@ -57,6 +57,7 @@ export function createSupabaseGameService(): GameService {
     buildRoadPath: method("buildRoadPath"),
     eraseOwnedRoads: method("eraseOwnedRoads"),
     repositionEntity: method("repositionEntity"),
+    rotateBuilding: method("rotateBuilding"),
     storeEntity: method("storeEntity"),
     restoreEntity: method("restoreEntity"),
     createAssignedPortal: method("createAssignedPortal"),

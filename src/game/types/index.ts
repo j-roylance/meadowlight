@@ -235,7 +235,7 @@ export interface CityState {
   displayName: string;
   specialty: Specialty;
   seed: number;
-  generatorVersion: 1;
+  generatorVersion: number;
   createdAt: number;
   revision: number;
   arrivalX: bigint;

@@ -1,15 +1,22 @@
 import { getBuilding } from "@/game/catalog/definitions";
 import type { CityState, PlacedEntity, WorldCoord } from "@/game/types";
-import { footprintTiles, tileKey } from "./coords";
+import { footprintTiles, rotatedFootprintSize, tileKey } from "./coords";
 import { isWater, resolveTerrain } from "./terrain";
 import { roadSet } from "./roads";
+
+function entityFootprint(
+  e: Pick<PlacedEntity, "x" | "y" | "rotation" | "definitionId">
+): WorldCoord[] {
+  const def = getBuilding(e.definitionId);
+  const { w, h } = rotatedFootprintSize(def.footprint.w, def.footprint.h, e.rotation);
+  return footprintTiles(e.x, e.y, w, h);
+}
 
 export function occupiedTiles(city: CityState): Set<string> {
   const set = new Set<string>();
   for (const e of city.entities) {
     if (e.stored) continue;
-    const def = getBuilding(e.definitionId);
-    for (const t of footprintTiles(e.x, e.y, def.footprint.w, def.footprint.h)) {
+    for (const t of entityFootprint(e)) {
       set.add(tileKey(t.x, t.y));
     }
   }
@@ -21,16 +28,17 @@ export function validatePlacement(
   definitionId: string,
   x: bigint,
   y: bigint,
-  ignoreEntityId?: string
+  ignoreEntityId?: string,
+  rotation: 0 | 90 | 180 | 270 = 0
 ): { ok: boolean; reason?: string; tiles: WorldCoord[] } {
   const def = getBuilding(definitionId);
-  const tiles = footprintTiles(x, y, def.footprint.w, def.footprint.h);
+  const { w, h } = rotatedFootprintSize(def.footprint.w, def.footprint.h, rotation);
+  const tiles = footprintTiles(x, y, w, h);
   const occ = occupiedTiles(city);
   if (ignoreEntityId) {
     const ignore = city.entities.find((e) => e.id === ignoreEntityId);
     if (ignore && !ignore.stored) {
-      const idef = getBuilding(ignore.definitionId);
-      for (const t of footprintTiles(ignore.x, ignore.y, idef.footprint.w, idef.footprint.h)) {
+      for (const t of entityFootprint(ignore)) {
         occ.delete(tileKey(t.x, t.y));
       }
     }
@@ -72,8 +80,7 @@ export function validateRoadTile(
 export function findEntityAt(city: CityState, x: bigint, y: bigint): PlacedEntity | null {
   for (const e of city.entities) {
     if (e.stored) continue;
-    const def = getBuilding(e.definitionId);
-    const tiles = footprintTiles(e.x, e.y, def.footprint.w, def.footprint.h);
+    const tiles = entityFootprint(e);
     if (tiles.some((t) => t.x === x && t.y === y)) return e;
   }
   return null;

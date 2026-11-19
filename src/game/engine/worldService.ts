@@ -21,7 +21,7 @@ import { clearHarvestablesUnder, tryHarvest } from "@/game/simulation/harvest";
 import { roadSet, validateRoadPath } from "@/game/simulation/roads";
 import { applyWork } from "@/game/simulation/projects";
 import { createStarterCity } from "@/game/simulation/starter";
-import { tileKey } from "@/game/simulation/coords";
+import { nextBuildingRotation, tileKey } from "@/game/simulation/coords";
 import { bankCostGain, countBanks, isBankEntity } from "@/game/simulation/bank";
 import {
   ZERO_RESOURCES,
@@ -641,7 +641,8 @@ export function createWorldService(options: WorldServiceOptions): GameService {
           entity.definitionId,
           input.x,
           input.y,
-          entity.id
+          entity.id,
+          entity.rotation
         );
         if (!place.ok) return { ok: false, error: place.reason, city };
         city = {
@@ -650,6 +651,41 @@ export function createWorldService(options: WorldServiceOptions): GameService {
           entities: city.entities.map((e) =>
             e.id === entity.id
               ? { ...e, x: input.x, y: input.y, revision: e.revision + 1 }
+              : e
+          ),
+          revision: city.revision + 1,
+        };
+        s.player = city;
+        return { ok: true, city };
+      });
+    },
+
+    async rotateBuilding(input) {
+      return idempotent(input.requestId, () => {
+        const s = ensure();
+        let city = settleCity(s.player, now()).city;
+        if (city.revision !== input.expectedRevision) {
+          return { ok: false, error: "Stale city revision", city };
+        }
+        const entity = city.entities.find((e) => e.id === input.entityId);
+        if (!entity || entity.stored) return { ok: false, error: "Entity not found", city };
+        const direction = input.direction === -1 ? -1 : 1;
+        const rotation = nextBuildingRotation(entity.rotation, direction);
+        const place = validatePlacement(
+          city,
+          entity.definitionId,
+          entity.x,
+          entity.y,
+          entity.id,
+          rotation
+        );
+        if (!place.ok) return { ok: false, error: place.reason, city };
+        city = {
+          ...city,
+          terrainOverrides: clearHarvestablesUnder(city, place.tiles),
+          entities: city.entities.map((e) =>
+            e.id === entity.id
+              ? { ...e, rotation, revision: e.revision + 1 }
               : e
           ),
           revision: city.revision + 1,
@@ -700,7 +736,14 @@ export function createWorldService(options: WorldServiceOptions): GameService {
         }
         const entity = city.entities.find((e) => e.id === input.entityId);
         if (!entity || !entity.stored) return { ok: false, error: "Not in storage", city };
-        const place = validatePlacement(city, entity.definitionId, input.x, input.y);
+        const place = validatePlacement(
+          city,
+          entity.definitionId,
+          input.x,
+          input.y,
+          undefined,
+          entity.rotation
+        );
         if (!place.ok) return { ok: false, error: place.reason, city };
         city = {
           ...city,

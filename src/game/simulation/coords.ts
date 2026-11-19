@@ -118,3 +118,19 @@ export function footprintTiles(
   }
   return tiles;
 }
+
+/** Axis-aligned footprint size after yaw (90/270 swap width/depth). */
+export function rotatedFootprintSize(
+  w: number,
+  h: number,
+  rotation: 0 | 90 | 180 | 270
+): { w: number; h: number } {
+  return rotation === 90 || rotation === 270 ? { w: h, h: w } : { w, h };
+}
+
+export function nextBuildingRotation(
+  rotation: 0 | 90 | 180 | 270,
+  direction: 1 | -1
+): 0 | 90 | 180 | 270 {
+  return (((rotation + direction * 90) % 360 + 360) % 360) as 0 | 90 | 180 | 270;
+}

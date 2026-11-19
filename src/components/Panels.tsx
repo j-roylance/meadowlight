@@ -16,6 +16,7 @@ import {
   EXPLORATION_HAPPINESS_COST,
   FOUNDING_LAUNCH_COST,
 } from "@/game/catalog/expansion";
+import { HARVEST_STONE, HARVEST_WOOD } from "@/game/types";
 import { useGame } from "./GameProvider";
 import { ClickableHintIcon } from "./ClickableHint";
 import {
@@ -303,9 +304,9 @@ export function SettingsPanel() {
         Reduced motion
       </label>
       <p className="mb-3 text-sm opacity-80">
-        Click a tree or stone pile on the map to harvest (1 action · +25 wood or
-        stone). Wood Workshop and Stone Yard add wood and stone every 12h
-        automatically.
+        Click a tree or stone pile to select it, then Mine from the inspector (1
+        action · +25 wood or stone). Wood Workshop and Stone Yard add wood and
+        stone every 12h automatically.
       </p>
       <h3 className="mb-2 font-bold">Supply run (1 action)</h3>
       <div className="flex flex-wrap gap-2">
@@ -456,9 +457,13 @@ export function Inspector() {
   const {
     selected,
     setSelected,
+    selectedHarvest,
+    setSelectedHarvest,
+    harvestSelected,
     city,
     upgradeSelected,
     storeSelected,
+    rotateSelected,
     bankExchange,
     setPanel,
     visiting,
@@ -470,7 +475,57 @@ export function Inspector() {
     enterStation,
     foundingLaunch,
   } = useGame();
-  if (!selected || !city || visiting) return null;
+
+  if (visiting || !city) return null;
+
+  if (selectedHarvest && !selected) {
+    const isTree = selectedHarvest.kind === "tree";
+    const resource = isTree ? "wood" : "stone";
+    const amount = isTree ? HARVEST_WOOD : HARVEST_STONE;
+    const canMine = city.economy.actionsRemaining > 0;
+    return (
+      <div className="meadow-panel absolute bottom-20 left-3 z-20 max-w-sm p-3">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-1.5 font-bold">
+              {isTree ? "Tree" : "Stone pile"}
+              <ClickableHintIcon size={14} title="Can be mined" />
+            </div>
+            <div className="text-xs opacity-70">
+              Tile {selectedHarvest.x.toString()},{selectedHarvest.y.toString()} · natural resource
+            </div>
+            <div className="mt-1 text-[11px] opacity-70">
+              {isTree
+                ? "A harvestable tree. Mining costs 1 action and grants wood."
+                : "A harvestable stone pile. Mining costs 1 action and grants stone."}
+            </div>
+          </div>
+          <button type="button" className="meadow-btn" onClick={() => setSelectedHarvest(null)}>
+            ✕
+          </button>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="meadow-btn meadow-btn-primary"
+            disabled={!canMine}
+            onClick={() => void harvestSelected()}
+          >
+            <span className="inline-flex flex-wrap items-center gap-1.5">
+              Mine ({isTree ? "chop" : "gather"})
+              <ResourceAmount resource={resource} amount={amount} size="sm" />
+              · 1 action
+            </span>
+          </button>
+        </div>
+        {!canMine && (
+          <p className="mt-2 text-xs opacity-80">No actions remaining this window.</p>
+        )}
+      </div>
+    );
+  }
+
+  if (!selected) return null;
   const portal = city.portals.find((p) => p.entityId === selected.id);
   const isCottage =
     selected.definitionId === "cottage_a" ||
@@ -521,7 +576,7 @@ export function Inspector() {
                 ? `${bankCount} bank${bankCount === 1 ? "" : "s"} · click to exchange (1 action)`
                 : portal
                   ? "Click Send to move resources or project work"
-                  : `Level ${selected.level} · tile ${selected.x.toString()},${selected.y.toString()}${isPrimaryHome ? " · Your home" : ""}`}
+                  : `Level ${selected.level} · tile ${selected.x.toString()},${selected.y.toString()} · ${selected.rotation}°${isPrimaryHome ? " · Your home" : ""}`}
           </div>
           {(projectDef?.description ||
             (buildingDef && BUILDING_TIPS[buildingDef.id])) && (
@@ -645,6 +700,26 @@ export function Inspector() {
             Upgrade (1 action)
           </button>
         )}
+        <button
+          type="button"
+          className="meadow-btn"
+          onClick={(ev) => {
+            ev.stopPropagation();
+            void rotateSelected(-1);
+          }}
+        >
+          Rotate L (free)
+        </button>
+        <button
+          type="button"
+          className="meadow-btn"
+          onClick={(ev) => {
+            ev.stopPropagation();
+            void rotateSelected(1);
+          }}
+        >
+          Rotate R (free)
+        </button>
         {selected.definitionId !== "town_hall" &&
           selected.definitionId !== "project_site" && (
           <button type="button" className="meadow-btn" onClick={() => void storeSelected()}>
@@ -920,8 +995,8 @@ export function ErrorToast() {
 
 /** Small always-reachable entry point to exploration (city view, nothing selected). */
 export function ExploreChip() {
-  const { city, selected, visiting, sceneView, enterExpedition } = useGame();
-  if (!city || !city.onboardingComplete || visiting || selected) return null;
+  const { city, selected, selectedHarvest, visiting, sceneView, enterExpedition } = useGame();
+  if (!city || !city.onboardingComplete || visiting || selected || selectedHarvest) return null;
   if (sceneView.kind !== "city") return null;
   const exp = city.expansion.activeExpedition;
   const resumable = exp && (exp.status === "active" || exp.status === "paused");

@@ -12,7 +12,9 @@ export const palette = {
   water: "#7EB8D4",
   waterDeep: "#5A9BB8",
   waterHighlight: "#A8D4E8",
-  sand: "#E8D4A0",
+  /** Warm dune gold — must stay distinct from creamDeep sky or deserts vanish. */
+  sand: "#D2AE62",
+  sandDeep: "#B89048",
   treeCanopy: "#4A8A3A",
   treeCanopyLight: "#6AAA50",
   treeTrunk: "#8B5A3C",
